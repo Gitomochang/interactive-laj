@@ -4,7 +4,7 @@
 
 ## 使い方
 
-1.  `index.html` を開いてください。
+1.  [Interactive LAJ](https://gitomochang.github.io/interactive-laj/)にアクセスしてください。
 2.  地図上にマーカーが表示されます。
 3.  **項目の絞り込み**: 左上のドロップダウンメニューから、表示したい項目（例：かたつむり）を選択できます。
 4.  **検索**: 検索ボックスに語形や県名を入力して絞り込みができます。
@@ -23,4 +23,5 @@
 
 ## 作成者
 Tomoya NARITA <br> 
+
 [naritatomoya.com](https://www.naritatomoya.com/)
