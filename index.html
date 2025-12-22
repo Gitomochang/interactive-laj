@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive LAJ</title>
+
+    <!-- Favicon setup-->
+    <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
+    <link rel="shortcut icon" href="favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="MyWebSite" />
+    <link rel="manifest" href="favicon/site.webmanifest" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            /* Prevent body scroll */
+        }
+
+        #container {
+            display: flex;
+            height: 100%;
+        }
+
+        #sidebar {
+            width: 300px;
+            background: white;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #map {
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        h1 small {
+            font-size: 0.6em;
+            color: #777;
+            font-weight: normal;
+        }
+
+        .stats {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        #resultList {
+            flex-grow: 1;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .result-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .result-item .word {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+
+        .result-item .meta {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .info-box {
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+        <div id="sidebar">
+            <h1>Interactive LAJ<br><small>インタラクティブな『日本言語地図』</small></h1>
+            <div style="margin-bottom: 10px;">
+                <select id="itemFilter"
+                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="">すべての項目</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="searchInput" placeholder="語形を検索..."
+                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+            <div id="stats" class="stats">Loading data...</div>
+
+            <div id="resultList">
+                <!-- Data items will appear here -->
+            </div>
+
+
+            <div class="info-box" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+                <p style="font-size: 0.8em; color: #666;">
+                    この地図は
+                    <a href="https://lajdb.org/" target="_blank" rel="noopener noreferrer"
+                        style="color: #888;">『日本言語地図』データベース</a>
+                    のデータを利用しています。
+                </p>
+                <p
+                    style="font-size: 0.75em; margin-top: 15px; color: #888; border-top: 1px solid #eee; padding-top: 5px;">
+                    Created by Tomoya NARITA<br>
+                    <a href="https://www.naritatomoya.com/" target="_blank" rel="noopener noreferrer"
+                        style="color: #888;">naritatomoya.com</a>
+                </p>
+            </div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <!-- App Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
