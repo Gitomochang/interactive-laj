@@ -90,13 +90,57 @@
 
         .result-item {
             padding: 10px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
-            transition: background 0.2s;
+            border-left: 0 solid transparent;
+            transition: border-left 0.2s, background-color 0.2s;
         }
 
         .result-item:hover {
             background-color: #f9f9f9;
+        }
+
+        /* Tooltip style */
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #eee;
+            color: #666;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 12px;
+            line-height: 16px;
+            margin-left: 5px;
+            cursor: help;
+            position: relative;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            width: 240px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+        }
+
+        .info-icon:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
         }
 
         .result-item .word {
@@ -131,12 +175,21 @@
             <div style="margin-bottom: 10px;">
                 <select id="itemFilter"
                     style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-                    <option value="">すべての項目</option>
+                    <option value="" disabled selected>項目を選択してください</option>
                 </select>
             </div>
             <div style="margin-bottom: 15px;">
                 <input type="text" id="searchInput" placeholder="語形を検索..."
                     style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 15px; display: flex; align-items: center; font-size: 0.9rem;">
+                <input type="checkbox" id="similarityColoring" style="margin-right: 8px;" checked>
+                <label for="similarityColoring">類似度でカラーリング</label>
+                <span class="info-icon">?
+                    <span class="tooltip">
+                        音韻素性ベクトルを経由地点とする巡回セールスマン問題の解にHUEコードを対応させています。
+                    </span>
+                </span>
             </div>
             <div id="stats" class="stats">Loading data...</div>
 

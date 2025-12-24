@@ -7,34 +7,90 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Initialize MarkerClusterGroup
-const markers = L.markerClusterGroup();
+// Initialize MarkerClusterGroup (used for high-density global views if ever restored)
+const markers = L.markerClusterGroup({
+    iconCreateFunction: function (cluster) {
+        return L.divIcon({
+            html: '<div><span>' + cluster.getChildCount() + '</span></div>',
+            className: 'marker-cluster marker-cluster-small',
+            iconSize: new L.Point(40, 40)
+        });
+    }
+});
+
+// Initialize LayerGroup for individual points (no clustering)
+const individualPoints = L.layerGroup();
 
 // Store loaded data globally
 let allData = [];
+let currentDrillDownWord = null;
 
 // Function to render markers and list based on data
-function renderMarkers(dataToRender) {
+function renderMarkers(dataToRender, searchQuery = "") {
     markers.clearLayers();
+    individualPoints.clearLayers();
 
     // Clear list
     const resultList = document.getElementById('resultList');
     resultList.innerHTML = '';
 
+    const useColoring = document.getElementById('similarityColoring').checked;
+    const selectedItem = document.getElementById('itemFilter').value;
+    const query = searchQuery.toLowerCase();
+
     // Limit list rendering for performance if too many items
     const maxListItems = 100;
     let listCount = 0;
+    const highlightedLatLngs = [];
+    const seenWords = new Set();
+    const uniqueForms = [];
+
+    // If we are in drill-down mode, filter data for that word
+    const isDrillDown = currentDrillDownWord !== null;
+
+    // Header for drill-down mode
+    if (isDrillDown) {
+        const backBtn = document.createElement('div');
+        backBtn.className = 'result-item';
+        backBtn.style.textAlign = 'center';
+        backBtn.style.background = '#eee';
+        backBtn.style.fontWeight = 'bold';
+        backBtn.style.cursor = 'pointer';
+        backBtn.innerHTML = `← 「${currentDrillDownWord}」のまとめに戻る`;
+        backBtn.onclick = () => {
+            currentDrillDownWord = null;
+            renderMarkers(dataToRender, searchQuery);
+        };
+        resultList.appendChild(backBtn);
+    }
 
     dataToRender.forEach(item => {
         if (item.lat && item.lng) {
-            const marker = L.marker([item.lat, item.lng]);
+            const isMatch = !query ||
+                (item.word && item.word.toLowerCase().includes(query)) ||
+                (item.prefecture && item.prefecture.toLowerCase().includes(query));
+
+            let marker;
+            const color = (useColoring && item.hue !== undefined) ? `hsl(${item.hue}, 70%, 50%)` : "#3388ff";
+
+            // If query exists, dim non-matches
+            const opacity = isMatch ? 1 : 0.1;
+            const fillOpacity = isMatch ? 0.8 : 0.05;
+
+            marker = L.circleMarker([item.lat, item.lng], {
+                radius: 4,
+                fillColor: color,
+                color: isMatch ? "#fff" : "transparent",
+                weight: 1,
+                opacity: opacity,
+                fillOpacity: fillOpacity
+            });
 
             // Create popup content
-            // Escape single quotes in word to avoid HTML attribute breaking
             const safeWord = item.word.replace(/'/g, "\\'");
-
+            const countSuffix = item.count ? ` <span style="font-weight: normal; color: #888; font-size: 0.8em;">(${item.count}地点)</span>` : "";
             const popupContent = `
-                <div style="font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">${item.word}</div>
+                <div style="font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">${item.word}${countSuffix}</div>
                 <div style="color: #666; font-size: 0.9em;">推定住所: ${item.address}</div>
                 <div style="color: #888; font-size: 0.8em;">(元データ: ${item.prefecture})</div>
                 <div style="font-size: 0.8em; margin-top: 5px; color: #888;">${item.item_name}</div>
@@ -44,90 +100,153 @@ function renderMarkers(dataToRender) {
             `;
 
             marker.bindPopup(popupContent);
-            markers.addLayer(marker);
 
-            // Add to sidebar list (limit to avoid freezing UI on huge datasets)
-            if (listCount < maxListItems) {
-                const li = document.createElement('div');
-                li.className = 'result-item';
-                li.innerHTML = `
-                    <div class="word">${item.word}</div>
-                    <div class="meta">${item.prefecture} | ${item.item_name}</div>
-                    <div class="meta" style="font-size: 0.8em; color: #aaa;">${item.address}</div>
-                `;
-                li.addEventListener('click', () => {
-                    // Zoom to marker
-                    map.flyTo([item.lat, item.lng], 12);
-                    // We need to find the specific marker layer to open it. 
-                    // Since we aren't storing the marker reference in the data item, we can just open it here if visible
-                    // Or purely relying on zoom is mostly enough for this UX.
-                    // For clustering, opening popup inside cluster is tricky without spiderfying.
-                    // Let's just zoom for now.
-                    marker.openPopup();
-                });
-                resultList.appendChild(li);
-                listCount++;
+            // If it's a specific item view, use individual points. 
+            // If it were a global view, we'd use markers (cluster).
+            if (selectedItem) {
+                individualPoints.addLayer(marker);
+            } else {
+                markers.addLayer(marker);
+            }
+
+            // Track search hits and collect unique forms for sidebar
+            if (isMatch) {
+                highlightedLatLngs.push([item.lat, item.lng]);
+
+                if (!seenWords.has(item.word)) {
+                    seenWords.add(item.word);
+                    uniqueForms.push(item);
+                }
             }
         }
     });
 
-    if (dataToRender.length > maxListItems) {
+    // If in drill-down mode, just render all matching items for that word
+    if (isDrillDown) {
+        dataToRender.forEach(item => {
+            if (item.word === currentDrillDownWord && listCount < maxListItems) {
+                const li = document.createElement('div');
+                li.className = 'result-item';
+                const colorIndicator = (item.hue !== undefined) ? `hsl(${item.hue}, 70%, 50%)` : null;
+                if (colorIndicator) {
+                    li.style.borderLeft = `5px solid ${colorIndicator}`;
+                }
+                li.innerHTML = `
+                    <div class="word">${item.word}</div>
+                    <div class="meta">${item.prefecture} | ${item.address}</div>
+                `;
+                li.addEventListener('click', () => {
+                    map.flyTo([item.lat, item.lng], 12);
+                    const m = findMarkerAt(item.lat, item.lng);
+                    if (m) m.openPopup();
+                });
+                resultList.appendChild(li);
+                listCount++;
+            }
+        });
+    } else {
+        // Sort unique forms by frequency (count) descending
+        uniqueForms.sort((a, b) => (b.count || 0) - (a.count || 0));
+
+        // Render unique forms to sidebar
+        uniqueForms.forEach(item => {
+            if (listCount < maxListItems) {
+                const li = document.createElement('div');
+                li.className = 'result-item';
+                const colorIndicator = (item.hue !== undefined) ? `hsl(${item.hue}, 70%, 50%)` : null;
+                if (colorIndicator) {
+                    li.style.borderLeft = `5px solid ${colorIndicator}`;
+                }
+                const sideCount = item.count ? `<span style="font-weight: normal; color: #aaa; font-size: 0.8em; margin-left: 5px;">(${item.count}地点)</span>` : "";
+                li.innerHTML = `
+                    <div class="word">${item.word}${sideCount}</div>
+                    <div class="meta">${item.item_name}</div>
+                    <div style="font-size: 0.7em; color: #ccc;">(ダブルクリックで詳細表示)</div>
+                `;
+                li.addEventListener('click', () => {
+                    // When clicking a unique form, trigger a specific search for it
+                    setSearch(item.word);
+                });
+                li.addEventListener('dblclick', () => {
+                    currentDrillDownWord = item.word;
+                    renderMarkers(dataToRender, searchQuery);
+                });
+                resultList.appendChild(li);
+                listCount++;
+            }
+        });
+    }
+
+    const matchCount = highlightedLatLngs.length;
+    const uniqueCount = seenWords.size;
+
+    if (uniqueCount > maxListItems) {
         const more = document.createElement('div');
         more.style.padding = '10px';
         more.style.color = '#888';
         more.style.fontStyle = 'italic';
-        more.textContent = `...他 ${dataToRender.length - maxListItems} 件`;
+        more.textContent = `...他 ${uniqueCount - maxListItems} 種の語形`;
         resultList.appendChild(more);
     }
 
-    // Add cluster group to map if not already there
-    if (!map.hasLayer(markers)) {
-        map.addLayer(markers);
+    // Toggle layer visibility
+    if (selectedItem) {
+        if (!map.hasLayer(individualPoints)) map.addLayer(individualPoints);
+        map.removeLayer(markers);
+    } else {
+        if (!map.hasLayer(markers)) map.addLayer(markers);
+        map.removeLayer(individualPoints);
     }
 
-    document.getElementById('stats').textContent = `${dataToRender.length} 件見つかりました`;
+    document.getElementById('stats').textContent = `${uniqueCount} 種の語形が見つかりました (${matchCount} 地点)`;
 
-    // Zoom to fit bounds of filtered results
-    if (dataToRender.length > 0) {
-        // Collect all latlngs
-        const latlngs = dataToRender
-            .filter(item => item.lat && item.lng)
-            .map(item => [item.lat, item.lng]);
+    if (highlightedLatLngs.length > 0) {
+        const bounds = L.latLngBounds(highlightedLatLngs);
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+    }
+}
 
-        if (latlngs.length > 0) {
-            const bounds = L.latLngBounds(latlngs);
-            // Use a padding to avoid markers being on the edge
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+// Helper to find a marker by coords
+function findMarkerAt(lat, lng) {
+    let found = null;
+    individualPoints.eachLayer(layer => {
+        if (layer.getLatLng().lat === lat && layer.getLatLng().lng === lng) {
+            found = layer;
         }
-    }
+    });
+    if (found) return found;
+    markers.eachLayer(layer => {
+        if (layer.getLatLng().lat === lat && layer.getLatLng().lng === lng) {
+            found = layer;
+        }
+    });
+    return found;
 }
 
 // Function to filter data
 function filterData() {
+    currentDrillDownWord = null; // Reset drill down on new search/filter
     const query = searchInput.value.toLowerCase();
     const selectedItem = itemFilter.value;
 
-    const filtered = allData.filter(item => {
-        // Text Match
-        const textMatch = !query ||
-            (item.word && item.word.toLowerCase().includes(query)) ||
-            (item.prefecture && item.prefecture.toLowerCase().includes(query));
+    if (!selectedItem) {
+        renderMarkers([]);
+        return;
+    }
 
-        // Item Filter Match
-        const itemMatch = !selectedItem || item.item_name === selectedItem;
-
-        return textMatch && itemMatch;
-    });
-
-    renderMarkers(filtered);
+    // Show all data for the item, but renderMarkers will handle the dimming based on query
+    const itemData = allData.filter(item => item.item_name === selectedItem);
+    renderMarkers(itemData, query);
 }
 
 // Event listeners
 const searchInput = document.getElementById('searchInput');
 const itemFilter = document.getElementById('itemFilter');
+const similarityColoring = document.getElementById('similarityColoring');
 
 searchInput.addEventListener('input', filterData);
 itemFilter.addEventListener('change', filterData);
+similarityColoring.addEventListener('change', filterData);
 
 // Helper to set search from popup
 window.setSearch = function (word) {
@@ -146,7 +265,6 @@ async function loadData() {
         }
         allData = await response.json();
 
-        // Populate Item Filter
         const uniqueItems = [...new Set(allData.map(item => item.item_name).filter(n => n))].sort();
         uniqueItems.forEach(itemName => {
             const option = document.createElement('option');
@@ -155,16 +273,7 @@ async function loadData() {
             itemFilter.appendChild(option);
         });
 
-        renderMarkers(allData);
-
-        // Fit bounds if data exists
-        if (allData.length > 0) {
-            map.fitBounds(markers.getBounds());
-            // Zoom out slightly if it's too zoomed in
-            if (map.getZoom() > 10) {
-                map.setZoom(10);
-            }
-        }
+        document.getElementById('stats').textContent = '項目を選択してください';
 
     } catch (error) {
         console.error('Error loading data:', error);

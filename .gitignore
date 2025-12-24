@@ -1,0 +1,14 @@
+# Development scripts
+preprocess.js
+
+# Reference materials (locally saved HTML)
+reference/
+
+# Dependencies
+node_modules/
+package-lock.json
+package.json
+
+# OS files
+.DS_Store
+Thumbs.db
