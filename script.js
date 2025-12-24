@@ -1,11 +1,53 @@
-// Initialize map centered on Japan
-const map = L.map('map').setView([38.0, 137.0], 5);
+// Define tile layers
+const baseLayers = {
+    osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }),
+    hot: L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team'
+    }),
+    cyclosm: L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+        maxZoom: 20,
+        attribution: '<a href="https://github.com/cyclosm/cyclosm-cartocss-style/releases" title="CyclOSM - Open Bicycle render">CyclOSM</a> | Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }),
+    positron: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }),
+    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }),
+    gsi_std: L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '国土地理院'
+    }),
+    gsi_pale: L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '国土地理院'
+    }),
+    gsi_blank: L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/blank/{z}/{x}/{y}.png', {
+        maxZoom: 14,
+        attribution: '国土地理院'
+    }),
+    gsi_photo: L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
+        maxZoom: 18,
+        attribution: '国土地理院'
+    })
+};
 
-// Add OpenStreetMap tile layer
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+// Initialize map centered on Japan
+const map = L.map('map', {
+    center: [38.0, 137.0],
+    zoom: 5,
+    layers: [baseLayers.osm] // Default to OSM
+});
+
+let currentBaseLayer = baseLayers.osm;
 
 // Initialize MarkerClusterGroup (used for high-density global views if ever restored)
 const markers = L.markerClusterGroup({
@@ -198,7 +240,7 @@ function renderMarkers(dataToRender, searchQuery = "") {
         map.removeLayer(individualPoints);
     }
 
-    document.getElementById('stats').textContent = `${uniqueCount} 種の語形が見つかりました (${matchCount} 地点)`;
+    document.getElementById('stats').textContent = `${uniqueCount} 種の語形 (${matchCount} 地点)`;
 
     if (highlightedLatLngs.length > 0) {
         const bounds = L.latLngBounds(highlightedLatLngs);
@@ -223,30 +265,67 @@ function findMarkerAt(lat, lng) {
     return found;
 }
 
-// Function to filter data
 function filterData() {
     currentDrillDownWord = null; // Reset drill down on new search/filter
     const query = searchInput.value.toLowerCase();
     const selectedItem = itemFilter.value;
 
-    if (!selectedItem) {
-        renderMarkers([]);
-        return;
-    }
-
-    // Show all data for the item, but renderMarkers will handle the dimming based on query
     const itemData = allData.filter(item => item.item_name === selectedItem);
     renderMarkers(itemData, query);
+}
+
+// Modal handling
+async function openReadme() {
+    const modal = document.getElementById('readmeModal');
+    const content = document.getElementById('readmeContent');
+    modal.style.display = 'block';
+
+    try {
+        const response = await fetch('README.md');
+        if (!response.ok) throw new Error('Failed to load README');
+        const text = await response.ok ? await response.text() : "README.md が見つかりませんでした。";
+        content.innerHTML = marked.parse(text);
+    } catch (error) {
+        console.error('Error loading README:', error);
+        content.innerHTML = '<p style="color: red;">README.md の読み込みに失敗しました。</p>';
+    }
+}
+
+function closeReadme() {
+    document.getElementById('readmeModal').style.display = 'none';
 }
 
 // Event listeners
 const searchInput = document.getElementById('searchInput');
 const itemFilter = document.getElementById('itemFilter');
 const similarityColoring = document.getElementById('similarityColoring');
+const mapBackground = document.getElementById('mapBackground');
+const openAboutBtn = document.getElementById('openAbout');
+const closeModalBtn = document.getElementById('closeModal');
+const readmeModal = document.getElementById('readmeModal');
 
 searchInput.addEventListener('input', filterData);
 itemFilter.addEventListener('change', filterData);
 similarityColoring.addEventListener('change', filterData);
+
+mapBackground.addEventListener('change', (e) => {
+    const layer = baseLayers[e.target.value];
+    if (layer) {
+        map.removeLayer(currentBaseLayer);
+        map.addLayer(layer);
+        currentBaseLayer = layer;
+    }
+});
+
+openAboutBtn.addEventListener('click', openReadme);
+closeModalBtn.addEventListener('click', closeReadme);
+
+// Close modal when clicking outside
+window.addEventListener('click', (event) => {
+    if (event.target === readmeModal) {
+        closeReadme();
+    }
+});
 
 // Helper to set search from popup
 window.setSearch = function (word) {
@@ -274,6 +353,12 @@ async function loadData() {
         });
 
         document.getElementById('stats').textContent = '項目を選択してください';
+
+        // Set default item
+        if (uniqueItems.includes('かたつむり（蝸牛）')) {
+            itemFilter.value = 'かたつむり（蝸牛）';
+            filterData();
+        }
 
     } catch (error) {
         console.error('Error loading data:', error);

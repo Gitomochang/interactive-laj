@@ -52,7 +52,8 @@
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 15px;
+            /* Reduced from 20px */
             box-sizing: border-box;
         }
 
@@ -164,6 +165,98 @@
             padding-left: 20px;
             margin: 5px 0;
         }
+
+        /* Modal Styles */
+        #readmeModal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-container {
+            position: relative;
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 0;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80%;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 15px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .close-btn {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        #readmeContent {
+            padding: 25px;
+            overflow-y: auto;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        #readmeContent h1,
+        #readmeContent h2,
+        #readmeContent h3 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            margin-top: 25px;
+        }
+
+        #readmeContent code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        #readmeContent a {
+            color: #3498db;
+        }
     </style>
 </head>
 
@@ -171,49 +264,87 @@
 
     <div id="container">
         <div id="sidebar">
-            <h1>Interactive LAJ<br><small>インタラクティブな『日本言語地図』</small></h1>
+            <h1 style="margin-bottom: 12px;">
+                Interactive LAJ<br>
+                <small>インタラクティブな『日本言語地図』</small><br>
+                <span id="openAbout"
+                    style="font-size: 0.6em; color: #888; text-decoration: underline; cursor: pointer; font-weight: normal; margin-top: 3px; display: inline-block;">
+                    About / Usage
+                </span>
+            </h1>
             <div style="margin-bottom: 10px;">
                 <select id="itemFilter"
                     style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-                    <option value="" disabled selected>項目を選択してください</option>
                 </select>
             </div>
-            <div style="margin-bottom: 15px;">
+            <div style="margin-bottom: 8px;"> <!-- Reduced from 15px -->
                 <input type="text" id="searchInput" placeholder="語形を検索..."
                     style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
             </div>
-            <div style="margin-bottom: 15px; display: flex; align-items: center; font-size: 0.9rem;">
-                <input type="checkbox" id="similarityColoring" style="margin-right: 8px;" checked>
-                <label for="similarityColoring">類似度でカラーリング</label>
-                <span class="info-icon">?
-                    <span class="tooltip">
-                        音韻素性ベクトルを経由地点とする巡回セールスマン問題の解にHUEコードを対応させています。
-                    </span>
-                </span>
-            </div>
+
             <div id="stats" class="stats">Loading data...</div>
 
             <div id="resultList">
                 <!-- Data items will appear here -->
             </div>
 
+            <div
+                style="margin-top: 10px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; border-top: 1px solid #eee; padding-top: 10px;">
+                <div style="display: flex; align-items: center;">
+                    <input type="checkbox" id="similarityColoring" style="margin-right: 8px;" checked>
+                    <label for="similarityColoring">類似度でカラーリング</label>
+                    <span class="info-icon">?
+                        <span class="tooltip">
+                            音韻素性ベクトルを経由地点とする巡回セールスマン問題の解にHUEコードを対応させています。
+                        </span>
+                    </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="mapBackground" style="font-size: 0.8rem; color: #666; white-space: nowrap;">背景</label>
+                    <select id="mapBackground"
+                        style="flex-grow: 1; padding: 2px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem;">
+                        <option value="osm">OpenStreetMap</option>
+                        <option value="hot">OSM (HOT)</option>
+                        <option value="cyclosm">CyclOSM</option>
+                        <option value="positron">CartoDB (Light)</option>
+                        <option value="dark">CartoDB (Dark)</option>
+                        <option value="gsi_std">地理院 標準</option>
+                        <option value="gsi_pale">地理院 淡色</option>
+                        <option value="gsi_blank">地理院 白地図</option>
+                        <option value="gsi_photo">地理院 写真</option>
+                    </select>
+                </div>
+            </div>
 
-            <div class="info-box" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+            <div class="info-box" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
                 <p style="font-size: 0.8em; color: #666;">
-                    この地図は
+                    このアプリは
                     <a href="https://lajdb.org/" target="_blank" rel="noopener noreferrer"
                         style="color: #888;">『日本言語地図』データベース</a>
-                    のデータを利用しています。
+                    を利用しています。
                 </p>
                 <p
                     style="font-size: 0.75em; margin-top: 15px; color: #888; border-top: 1px solid #eee; padding-top: 5px;">
-                    Created by Tomoya NARITA<br>
+                    Created by
                     <a href="https://www.naritatomoya.com/" target="_blank" rel="noopener noreferrer"
-                        style="color: #888;">naritatomoya.com</a>
+                        style="color: #888;">Tomoya NARITA</a>
                 </p>
             </div>
         </div>
         <div id="map"></div>
+    </div>
+
+    <!-- Readme Modal -->
+    <div id="readmeModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>About Interactive LAJ</h2>
+                <span class="close-btn" id="closeModal">&times;</span>
+            </div>
+            <div id="readmeContent">
+                読み込み中...
+            </div>
+        </div>
     </div>
 
     <!-- Leaflet JS -->
@@ -222,6 +353,9 @@
 
     <!-- MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <!-- App Script -->
     <script src="script.js"></script>
