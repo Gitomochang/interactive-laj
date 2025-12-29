@@ -11,6 +11,7 @@
 - **ドリルダウン（詳細表示）**: サイドバーの語形を**ダブルクリック**することで、その語形に該当する全地点の個別リストに切り替え、地点ごとの詳細を確認できます。
 - **個別ピン表示**: 項目選択時にはクラスタリングを行わず、全ての地点を個別のサークルマーカーで表示し、微細な分布を観察しやすくしています。
 - **マップ背景の切り替え**: OpenStreetMap（通常・HOT・CyclOSM）に加え、国土地理院の地図（標準・淡色・白地図・空中写真）や、データ可視化に最適な CartoDB (Positron/Dark) をプルダウンで切り替え可能です。
+- **モバイル対応**: スマートフォンやタブレットでも快適に閲覧できるよう、ボトムシート形式のレスポンシブデザインを採用しています。操作ハンドルを使ってメニューの最小化・最大化が可能です。
 
 ## 使い方
 
@@ -24,10 +25,14 @@
 5.  **マップ背景の切り替え**: 
     - サイドバーの「マップ背景」から背景地図を変更できます。
     - マーカーの視認性を高めたい場合や分布を際立たせたい場合は、「CartoDB (Positron - Clean)」や「地理院地図（白地図）」がおすすめです。
+6.  **モバイルでの操作**:
+    - 画面下部のバー（ハンドル）をタップ、または上にスワイプすることで、メニュー（ボトムシート）を最大化できます。
+    - 地図を広く見たい場合は、ハンドルをタップして最小化してください。
 
 
 ## 参考資料
 - Sato, T. (2022). [Word Tour: One-dimensional Word Embeddings via the Traveling Salesman Problem](https://doi.org/10.18653/v1/2022.naacl-main.157). In *Proceedings of the 2022 Conference on North American Chapter of the Association for Computational Linguistics: Human Language Technologies*, pages 2150–2160.
+- 近藤泰弘・持橋大地（2025）「[語形のベクトル化による最適な言語地図の描画](https://www.anlp.jp/proceedings/annual_meeting/2025/pdf_dir/E2-5.pdf)」『言語処理学会 第31回年次大会 発表論文集』2025(3): 582-587.
 
 
 ## データ出典・利用条件

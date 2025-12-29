@@ -166,6 +166,88 @@
             margin: 5px 0;
         }
 
+        /* Layout helpers */
+        .sidebar-header {
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer {
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+
+        /* Mobile Styles - Bottom Sheet */
+        @media (max-width: 768px) {
+            #container {
+                flex-direction: column;
+            }
+
+            #sidebar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 120px;
+                /* Default height */
+                z-index: 1001;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+                transition: height 0.3s ease-out, transform 0.3s ease-out;
+                padding-top: 10px;
+                overflow: hidden;
+                /* Prevent overall scroll */
+                display: flex;
+                flex-direction: column;
+            }
+
+            #sidebar.sheet-minimized {
+                height: 120px;
+            }
+
+            #sidebar.sheet-full {
+                height: 85vh;
+            }
+
+            #map {
+                height: 100vh;
+                width: 100%;
+            }
+
+            .sheet-handle {
+                display: block;
+                width: 40px;
+                height: 5px;
+                background: #ccc;
+                border-radius: 3px;
+                margin: 0 auto 10px auto;
+                cursor: grab;
+                flex-shrink: 0;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+                margin-bottom: 10px;
+            }
+
+            #resultList {
+                overflow-y: auto;
+                flex-grow: 1;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .modal-container {
+                width: 95%;
+                margin: 2% auto;
+                max-height: 95%;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .sheet-handle {
+                display: none;
+            }
+        }
+
         /* Modal Styles */
         #readmeModal {
             display: none;
@@ -264,71 +346,78 @@
 
     <div id="container">
         <div id="sidebar">
-            <h1 style="margin-bottom: 12px;">
-                Interactive LAJ<br>
-                <small>インタラクティブな『日本言語地図』</small><br>
-                <span id="openAbout"
-                    style="font-size: 0.6em; color: #888; text-decoration: underline; cursor: pointer; font-weight: normal; margin-top: 3px; display: inline-block;">
-                    About / Usage
-                </span>
-            </h1>
-            <div style="margin-bottom: 10px;">
-                <select id="itemFilter"
-                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-                </select>
-            </div>
-            <div style="margin-bottom: 8px;"> <!-- Reduced from 15px -->
-                <input type="text" id="searchInput" placeholder="語形を検索..."
-                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-            </div>
+            <div class="sheet-handle"></div>
+            <div class="sidebar-header">
+                <h1 style="margin-bottom: 12px;">
+                    Interactive LAJ<br>
+                    <small>インタラクティブな『日本言語地図』</small><br>
+                    <span id="openAbout"
+                        style="font-size: 0.6em; color: #888; text-decoration: underline; cursor: pointer; font-weight: normal; margin-top: 3px; display: inline-block;">
+                        About / Usage
+                    </span>
+                </h1>
+                <div style="margin-bottom: 10px;">
+                    <select id="itemFilter"
+                        style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                    </select>
+                </div>
+                <div style="margin-bottom: 8px;"> <!-- Reduced from 15px -->
+                    <input type="text" id="searchInput" placeholder="語形を検索..."
+                        style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
 
-            <div id="stats" class="stats">Loading data...</div>
+                <div id="stats" class="stats" style="border-bottom: 1px solid #eee; padding-bottom: 8px;">Loading
+                    data...</div>
+            </div>
 
             <div id="resultList">
                 <!-- Data items will appear here -->
             </div>
 
-            <div
-                style="margin-top: 10px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; border-top: 1px solid #eee; padding-top: 10px;">
-                <div style="display: flex; align-items: center;">
-                    <input type="checkbox" id="similarityColoring" style="margin-right: 8px;" checked>
-                    <label for="similarityColoring">類似度でカラーリング</label>
-                    <span class="info-icon">?
-                        <span class="tooltip">
-                            音韻素性ベクトルを経由地点とする巡回セールスマン問題の解にHUEコードを対応させています。
+            <div class="sidebar-footer">
+                <div
+                    style="margin-top: 0px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; border-top: 1px solid #eee; padding-top: 10px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="similarityColoring" style="margin-right: 8px;" checked>
+                        <label for="similarityColoring">類似度でカラーリング</label>
+                        <span class="info-icon">?
+                            <span class="tooltip">
+                                音韻素性ベクトルを経由地点とする巡回セールスマン問題の解にHUEコードを対応させています。
+                            </span>
                         </span>
-                    </span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="mapBackground"
+                            style="font-size: 0.8rem; color: #666; white-space: nowrap;">背景</label>
+                        <select id="mapBackground"
+                            style="flex-grow: 1; padding: 2px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem;">
+                            <option value="osm">OpenStreetMap</option>
+                            <option value="hot">OSM (HOT)</option>
+                            <option value="cyclosm">CyclOSM</option>
+                            <option value="positron">CartoDB (Light)</option>
+                            <option value="dark">CartoDB (Dark)</option>
+                            <option value="gsi_std">地理院 標準</option>
+                            <option value="gsi_pale">地理院 淡色</option>
+                            <option value="gsi_blank">地理院 白地図</option>
+                            <option value="gsi_photo">地理院 写真</option>
+                        </select>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label for="mapBackground" style="font-size: 0.8rem; color: #666; white-space: nowrap;">背景</label>
-                    <select id="mapBackground"
-                        style="flex-grow: 1; padding: 2px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem;">
-                        <option value="osm">OpenStreetMap</option>
-                        <option value="hot">OSM (HOT)</option>
-                        <option value="cyclosm">CyclOSM</option>
-                        <option value="positron">CartoDB (Light)</option>
-                        <option value="dark">CartoDB (Dark)</option>
-                        <option value="gsi_std">地理院 標準</option>
-                        <option value="gsi_pale">地理院 淡色</option>
-                        <option value="gsi_blank">地理院 白地図</option>
-                        <option value="gsi_photo">地理院 写真</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="info-box" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
-                <p style="font-size: 0.8em; color: #666;">
-                    このアプリは
-                    <a href="https://lajdb.org/" target="_blank" rel="noopener noreferrer"
-                        style="color: #888;">『日本言語地図』データベース</a>
-                    を利用しています。
-                </p>
-                <p
-                    style="font-size: 0.75em; margin-top: 15px; color: #888; border-top: 1px solid #eee; padding-top: 5px;">
-                    Created by
-                    <a href="https://www.naritatomoya.com/" target="_blank" rel="noopener noreferrer"
-                        style="color: #888;">Tomoya NARITA</a>
-                </p>
+                <div class="info-box" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <p style="font-size: 0.8em; color: #666; margin: 0;">
+                        このアプリは
+                        <a href="https://lajdb.org/" target="_blank" rel="noopener noreferrer"
+                            style="color: #888;">『日本言語地図』データベース</a>
+                        を利用しています。
+                    </p>
+                    <p
+                        style="font-size: 0.75em; margin-top: 10px; color: #888; border-top: 1px solid #eee; padding-top: 5px; margin-bottom: 0;">
+                        Created by
+                        <a href="https://www.naritatomoya.com/" target="_blank" rel="noopener noreferrer"
+                            style="color: #888;">Tomoya NARITA</a>
+                    </p>
+                </div>
             </div>
         </div>
         <div id="map"></div>
@@ -358,7 +447,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <!-- App Script -->
-    <script src="script.js?v=1.1"></script>
+    <script src="script.js?v=1.2"></script>
 </body>
 
 </html>

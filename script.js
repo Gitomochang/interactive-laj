@@ -181,6 +181,7 @@ function renderMarkers(dataToRender, searchQuery = "") {
                     map.flyTo([item.lat, item.lng], 12);
                     const m = findMarkerAt(item.lat, item.lng);
                     if (m) m.openPopup();
+                    if (window.innerWidth <= 768) setSheetState('minimized');
                 });
                 resultList.appendChild(li);
                 listCount++;
@@ -208,6 +209,7 @@ function renderMarkers(dataToRender, searchQuery = "") {
                 li.addEventListener('click', () => {
                     // When clicking a unique form, trigger a specific search for it
                     setSearch(item.word);
+                    if (window.innerWidth <= 768) setSheetState('full');
                 });
                 li.addEventListener('dblclick', () => {
                     currentDrillDownWord = item.word;
@@ -333,6 +335,61 @@ window.setSearch = function (word) {
     filterData();
     map.closePopup();
 };
+
+// Bottom Sheet State Management
+const sidebar = document.getElementById('sidebar');
+const sheetHandle = document.querySelector('.sheet-handle');
+let sheetState = 'minimized'; // default on mobile
+
+function setSheetState(state) {
+    if (window.innerWidth > 768) return;
+    sidebar.classList.remove('sheet-minimized', 'sheet-full');
+    sidebar.classList.add(`sheet-${state}`);
+    sheetState = state;
+}
+
+if (sheetHandle) {
+    sheetHandle.addEventListener('click', () => {
+        if (sheetState === 'minimized') setSheetState('full');
+        else setSheetState('minimized');
+    });
+
+    // Simple touch drag support
+    let dragStartY = 0;
+    let dragStartHeight = 0;
+    let isDragging = false;
+
+    sheetHandle.addEventListener('touchstart', (e) => {
+        dragStartY = e.touches[0].clientY;
+        dragStartHeight = sidebar.offsetHeight;
+        sidebar.style.transition = 'none';
+        isDragging = true;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const deltaY = dragStartY - e.touches[0].clientY;
+        const newHeight = dragStartHeight + deltaY;
+        const vh = window.innerHeight / 100;
+        // Limit height
+        if (newHeight > 50 && newHeight < 95 * vh) {
+            sidebar.style.height = `${newHeight}px`;
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        sidebar.style.transition = '';
+        const finalHeight = sidebar.offsetHeight;
+        const vh = window.innerHeight / 100;
+
+        if (finalHeight > 40 * vh) setSheetState('full');
+        else setSheetState('minimized');
+
+        sidebar.style.height = ''; // Reset to class-defined height
+    });
+}
 
 
 // Function to load and display data
